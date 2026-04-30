@@ -1,16 +1,15 @@
 plugins {
     id 'java'
     id 'maven-publish'
-    id 'io.github.mcengine.gradle.plugin.version-calculator' version '1.0.0'
+    id 'io.github.mcengine.gradle.plugin.version-calculator' version '1.0.2'
 }
 
 group = project.property('project-group')
 
-def artifactId = project.findProperty('project-artifact-id') ?: 'mcbackpack-common'
-def artifactName = project.findProperty('project-artifact-name') ?: 'MCBackpack Common'
-def artifactDescription = project.findProperty('project-artifact-description') ?: "Common code for the MCBackpack ecosystem."
-def gitOwner = project.findProperty('git-org-name') ?: 'MCValac'
-def gitRepo = project.findProperty('git-org-repository') ?: 'plugin-common'
+def artifactName = project.findProperty('project-artifact-name')
+def artifactDescription = project.findProperty('project-artifact-description')
+def gitOwner = project.findProperty('git-org-name')
+def gitRepo = project.findProperty('git-org-repository')
 def gitUrl = "https://github.com/${gitOwner}/${gitRepo}"
 
 println "[${project.name}] Final Version (via Plugin): ${project.version}"
@@ -25,14 +24,14 @@ repositories {
         name = "GitHubPackagesAPI"
         url = uri("https://maven.pkg.github.com/MCValac/plugin-api")
         credentials {
-            username = System.getenv('GITHUB_ACTOR') ?: System.getenv('AGENT_NAME') ?: System.getenv('USER_GITHUB_NAME')
-            password = System.getenv('GITHUB_TOKEN') ?: System.getenv('AGENT_TOKEN') ?: System.getenv('USER_GITHUB_TOKEN')
+            username = System.getenv('GITHUB_ACTOR') ?: System.getenv('AGENT_GITHUB_NAME') ?: System.getenv('USER_GITHUB_NAME')
+            password = System.getenv('GITHUB_TOKEN') ?: System.getenv('AGENT_GITHUB_TOKEN') ?: System.getenv('USER_GITHUB_TOKEN')
         }
     }
 }
 
 dependencies {
-    compileOnly 'io.github.mcvalac:mcbackpack-api:2026.0.3-1'
+    compileOnly 'io.github.mcvalac:mcbackpack-api:2026.0.5-1'
 
     compileOnly 'com.zaxxer:HikariCP:7.0.2'
 }
@@ -40,7 +39,6 @@ dependencies {
 publishing {
     publications {
         create('mavenJava', MavenPublication) {
-            artifactId = artifactId 
             from components.java
 
             pom {
@@ -70,8 +68,8 @@ publishing {
             url = uri("https://maven.pkg.github.com/${gitOwner}/${gitRepo}")
 
             credentials {
-                username = System.getenv('GITHUB_ACTOR') ?: System.getenv('AGENT_NAME') ?: System.getenv('USER_GITHUB_NAME')
-                password = System.getenv('GITHUB_TOKEN') ?: System.getenv('AGENT_TOKEN') ?: System.getenv('USER_GITHUB_TOKEN')
+                username = System.getenv('GITHUB_ACTOR') ?: System.getenv('AGENT_GITHUB_NAME') ?: System.getenv('USER_GITHUB_NAME')
+                password = System.getenv('GITHUB_TOKEN') ?: System.getenv('AGENT_GITHUB_TOKEN') ?: System.getenv('USER_GITHUB_TOKEN')
             }
         }
     }
