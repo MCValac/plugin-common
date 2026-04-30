@@ -34,6 +34,9 @@ dependencies {
     compileOnly 'io.github.mcvalac:mcbackpack-api:2026.0.5-1'
 
     compileOnly 'com.zaxxer:HikariCP:7.0.2'
+    
+    // Added Gson dependency to resolve missing com.google.gson package
+    compileOnly 'com.google.code.gson:gson:2.14.0'
 }
 
 publishing {
