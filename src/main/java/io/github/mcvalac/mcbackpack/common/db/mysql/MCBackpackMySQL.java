@@ -89,14 +89,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         }
     }
 
-    /**
-     * Creates a new backpack row in MySQL with the provided metadata.
-     *
-     * @param uuid The unique backpack identifier.
-     * @param texture The texture value to store for this backpack.
-     * @param size The inventory size to persist.
-     * @return A future that completes when the insert has finished.
-     */
     @Override
     public CompletableFuture<Void> create(String uuid, String texture, int size) {
         return CompletableFuture.runAsync(() -> {
@@ -113,12 +105,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         });
     }
 
-    /**
-     * Loads a backpack row from MySQL by its unique identifier.
-     *
-     * @param uuid The unique backpack identifier.
-     * @return A future containing the loaded {@link BackpackData}, or {@code null} if not found.
-     */
     @Override
     public CompletableFuture<BackpackData> open(String uuid) {
         return CompletableFuture.supplyAsync(() -> {
@@ -144,17 +130,15 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         });
     }
 
-    /**
-     * Hashes and stores a password for the target backpack.
-     *
-     * @param uuid The unique backpack identifier.
-     * @param rawPassword The raw password input to hash before persisting.
-     * @return A future that completes when the password update is persisted.
-     */
+    @Override
+    public CompletableFuture<BackpackData> open(String uuid, String playerUuid) {
+        // MySQL implementation does not currently use player tracking, redirect to base
+        return open(uuid);
+    }
+
     @Override
     public CompletableFuture<Void> setPwd(String uuid, String rawPassword) {
         return CompletableFuture.runAsync(() -> {
-            // Generate the salted hash internally
             String saltedHash = generateSaltedHash(rawPassword);
             
             try (Connection conn = dataSource.getConnection();
@@ -168,13 +152,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         });
     }
 
-    /**
-     * Validates a password input against the currently stored hash for a backpack.
-     *
-     * @param uuid The unique backpack identifier.
-     * @param inputRaw The raw password input to verify.
-     * @return A future containing {@code true} if the password is valid or not set.
-     */
     @Override
     public CompletableFuture<Boolean> checkPwd(String uuid, String inputRaw) {
         return CompletableFuture.supplyAsync(() -> {
@@ -194,25 +171,11 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         });
     }
 
-    /**
-     * Replaces an existing backpack password with a new raw password.
-     *
-     * @param uuid The unique backpack identifier.
-     * @param newRaw The new raw password value.
-     * @return A future that completes when the password replacement is persisted.
-     */
     @Override
     public CompletableFuture<Void> changePwd(String uuid, String newRaw) {
-        return setPwd(uuid, newRaw); // Reuses setPwd which hashes
+        return setPwd(uuid, newRaw);
     }
 
-    /**
-     * Deletes the password for a backpack after optional password verification.
-     *
-     * @param uuid The unique backpack identifier.
-     * @param inputRaw The raw password used for verification, or {@code null} to bypass checks.
-     * @return A future containing {@code true} if a password entry was cleared.
-     */
     @Override
     public CompletableFuture<Boolean> deletePwd(String uuid, String inputRaw) {
         return CompletableFuture.supplyAsync(() -> {
@@ -222,7 +185,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
                     ResultSet rs = check.executeQuery();
                     if (rs.next()) {
                         String storedHash = rs.getString("pwd_hash");
-                        // If a password exists, require correct input unless caller intentionally bypasses by passing null (ops).
                         if (storedHash != null && inputRaw != null && !verifyPassword(inputRaw, storedHash)) {
                             return false; 
                         }
@@ -242,13 +204,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         });
     }
 
-    /**
-     * Persists serialized inventory content for a backpack.
-     *
-     * @param uuid The unique backpack identifier.
-     * @param contentBase64 The serialized Base64 inventory payload.
-     * @return A future that completes when the content update is persisted.
-     */
     @Override
     public CompletableFuture<Void> save(String uuid, String contentBase64) {
         return CompletableFuture.runAsync(() -> {
@@ -263,13 +218,12 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         });
     }
 
-    /**
-     * Updates the texture value associated with a backpack.
-     *
-     * @param uuid The unique backpack identifier.
-     * @param texture The new texture value to store.
-     * @return A future that completes when the texture update is persisted.
-     */
+    @Override
+    public CompletableFuture<Void> save(String uuid, String contentBase64, String playerUuid) {
+        // MySQL implementation does not currently use player tracking, redirect to base
+        return save(uuid, contentBase64);
+    }
+
     @Override
     public CompletableFuture<Void> setTexture(String uuid, String texture) {
         return CompletableFuture.runAsync(() -> {
@@ -284,9 +238,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         });
     }
 
-    /**
-     * Closes the MySQL connection pool if it is still open.
-     */
     @Override
     public void close() {
         if (dataSource != null && !dataSource.isClosed()) {
@@ -294,12 +245,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         }
     }
 
-    /**
-     * Generates a salted SHA-256 hash for the given password.
-     *
-     * @param password The raw password to hash.
-     * @return A string in the format {@code salt$hash}.
-     */
     private String generateSaltedHash(String password) {
         try {
             byte[] salt = new byte[16];
@@ -317,13 +262,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         }
     }
 
-    /**
-     * Verifies if a raw input matches a stored salted hash.
-     *
-     * @param inputRaw   The raw input password to check.
-     * @param storedHash The stored string containing the salt and hash ({@code salt$hash}).
-     * @return {@code true} if the input matches the hash, {@code false} otherwise.
-     */
     private boolean verifyPassword(String inputRaw, String storedHash) {
         try {
             if (storedHash.startsWith(PBKDF2_PREFIX)) {
@@ -355,12 +293,6 @@ public class MCBackpackMySQL implements IMCBackpackDB {
         }
     }
 
-    /**
-     * Converts a hexadecimal string into its byte-array representation.
-     *
-     * @param hex The hexadecimal string to decode.
-     * @return The decoded bytes, or {@code null} when input format is invalid.
-     */
     private byte[] hexToBytes(String hex) {
         if (hex.length() % 2 != 0) return null;
         byte[] bytes = new byte[hex.length() / 2];
