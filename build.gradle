@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'io.github.mcvalac:mcbackpack-api:2026.0.5-1'
+    compileOnly 'io.github.mcvalac:mcbackpack-api:2026.0.5-2'
 
     compileOnly 'com.zaxxer:HikariCP:7.0.2'
     
